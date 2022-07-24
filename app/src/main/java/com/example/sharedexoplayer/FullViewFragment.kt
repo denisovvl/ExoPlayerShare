@@ -113,10 +113,12 @@ class FullViewFragment : Fragment(), PlayerPositionProvider {
                     }
                     binding.btn.alpha = 1 - abs(offset / maxOffset)
                     binding.text.alpha = 1 - abs(offset / maxOffset)
+/*
                     if (animWidth == startSize?.width || kotlin.math.abs(offset) > maxOffset) {
                         getBackPlayer().setupBackAnim(250)
                         binding.root.setOnTouchListener(null)
                     }
+*/
                 }
                 MotionEvent.ACTION_UP -> {
                     if (kotlin.math.abs(offset) > maxOffset) {
