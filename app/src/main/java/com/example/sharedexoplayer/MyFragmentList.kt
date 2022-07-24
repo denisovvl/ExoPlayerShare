@@ -8,6 +8,7 @@ import android.view.*
 import android.widget.FrameLayout
 import androidx.core.animation.addListener
 import androidx.core.view.ViewCompat
+import androidx.core.view.doOnLayout
 import androidx.core.view.drawToBitmap
 import androidx.fragment.app.Fragment
 import androidx.transition.Fade
@@ -42,46 +43,8 @@ class MyFragmentList : Fragment(), PlayerPositionProvider {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         binding.playerView.player = player
         binding.playerView.setShutterBackgroundColor(Color.TRANSPARENT)
-        if (PlayerHolder.returnBack) {
-            postponeEnterTransition()
-            setupPosition()
-            PlayerHolder.player?.play()
-            PlayerHolder.onFirstRender = {
-                startPostponedEnterTransition()
-                PlayerHolder.onFirstRender = null
-                MyAnimation().apply {
-                    val s = TransitionValues(binding.playerView)
-                    val e = TransitionValues(binding.place)
-                    captureStartValues(s)
-                    captureEndValues(e)
-                    targetView = binding.playerView
-                    createAnimator(binding.root, s, e)
-                        ?.apply {
-                            addListener(onEnd = {
-                                val placeLP = binding.place.layoutParams as FrameLayout.LayoutParams
-                                binding.playerView.layoutParams = FrameLayout.LayoutParams(
-                                    placeLP.width,
-                                    placeLP.height
-                                ).apply {
-                                    setMargins(0, placeLP.topMargin, 0, 0)
-                                    gravity = placeLP.gravity
-                                }
-                            })
-                        }
-                        ?.start()
-                }
-            }
-        } else {
-            PlayerHolder.startPlayer()
-        }
-
-
-        binding.playerView.let {
-            ViewCompat.setTransitionName(it as View, SHARED_NAME)
-        }
-
+        PlayerHolder.startPlayer()
         binding.playerView.setOnClickListener {
-            //PlayerHolder.player?.pause()
             onClickItem("", binding.playerView)
         }
     }
@@ -91,20 +54,55 @@ class MyFragmentList : Fragment(), PlayerPositionProvider {
         return PlayerPosition(lp.width, lp.height, lp.gravity, lp.topMargin)
     }
 
+    override fun getPlayer() = binding.playerView
+
+    fun setupBackAnim() {
+        setupPosition()
+        binding.playerView.doOnLayout {
+            PlayerView.switchTargetView(player, getTopFragment().getPlayer(), binding.playerView)
+            PlayerHolder.player?.play()
+            PlayerHolder.onFirstRender = {
+                requireActivity().supportFragmentManager.popBackStackImmediate()
+                PlayerHolder.onFirstRender = null
+                MyAnimation().apply {
+                    val s = TransitionValues(binding.playerView)
+                    val e = TransitionValues(binding.place)
+                    captureStartValues(s)
+                    captureEndValues(e)
+                    targetView = binding.playerView
+                    createAnimator(binding.root, s, e)
+                        ?.apply {
+                            addListener(
+                                onStart = {
+                                    binding.playerView.visibility = View.VISIBLE
+                                },
+                                onEnd = {
+                                    val placeLP = binding.place.layoutParams as FrameLayout.LayoutParams
+                                    binding.playerView.layoutParams = FrameLayout.LayoutParams(
+                                        placeLP.width,
+                                        placeLP.height
+                                    ).apply {
+                                        setMargins(0, placeLP.topMargin, 0, 0)
+                                        gravity = placeLP.gravity
+                                    }
+                                })
+                        }
+                        ?.start()
+                }
+            }
+        }
+    }
+
     private fun onClickItem(item: String, view: View) {
         requireActivity().supportFragmentManager.beginTransaction()
             .setReorderingAllowed(true)
-            //.addSharedElement(view, FullViewFragment.SHARE_NAME)
-            .replace(R.id.conteiner, FullViewFragment.getInstance(item), "FullViewFragment")
+            .add(R.id.conteiner, FullViewFragment.getInstance(item), "FullViewFragment")
             .addToBackStack(null)
             .commit()
     }
 
     private fun setupPosition() {
-        val playerPosition = (requireActivity()
-            .supportFragmentManager
-            .findFragmentByTag("FullViewFragment") as PlayerPositionProvider).getPlayerPosition()
-
+        val playerPosition = getTopFragment().getPlayerPosition()
         binding.playerView.layoutParams = FrameLayout.LayoutParams(
             playerPosition.width,
             playerPosition.height
@@ -113,6 +111,10 @@ class MyFragmentList : Fragment(), PlayerPositionProvider {
             gravity = playerPosition.gravity
         }
     }
+
+    private fun getTopFragment() = (requireActivity()
+        .supportFragmentManager
+        .findFragmentByTag("FullViewFragment") as FullViewFragment)
 
     override fun onDestroyView() {
         super.onDestroyView()

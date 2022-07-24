@@ -5,13 +5,6 @@
     android:layout_height="match_parent"
     android:background="@color/black">
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:text="Первый экран"
-        android:layout_margin="100dp"/>
-
     <View
         android:id="@+id/place"
         android:layout_width="350dp"

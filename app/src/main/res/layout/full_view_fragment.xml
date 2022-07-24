@@ -12,10 +12,11 @@
         android:layout_height="match_parent"
         app:use_controller="false" />
 
-    <Button
+    <ImageView
+        android:id="@+id/btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:text="Второй экран"
-        android:layout_margin="100dp"/>
+        android:layout_gravity="end"
+        android:src="@drawable/ic_close"
+        android:layout_margin="16dp"/>
 </FrameLayout>
