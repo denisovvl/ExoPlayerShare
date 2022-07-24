@@ -5,6 +5,7 @@ import android.graphics.SurfaceTexture
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.view.*
+import android.view.animation.*
 import android.widget.FrameLayout
 import androidx.core.animation.addListener
 import androidx.core.view.ViewCompat
@@ -56,7 +57,7 @@ class MyFragmentList : Fragment(), PlayerPositionProvider {
 
     override fun getPlayer() = binding.playerView
 
-    fun setupBackAnim() {
+    fun setupBackAnim(anumDuration: Long = 250L) {
         setupPosition()
         binding.playerView.doOnLayout {
             PlayerView.switchTargetView(player, getTopFragment().getPlayer(), binding.playerView)
@@ -86,6 +87,8 @@ class MyFragmentList : Fragment(), PlayerPositionProvider {
                                         gravity = placeLP.gravity
                                     }
                                 })
+                            duration = anumDuration
+                            interpolator = OvershootInterpolator()
                         }
                         ?.start()
                 }

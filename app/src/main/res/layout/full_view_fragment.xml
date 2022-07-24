@@ -19,4 +19,14 @@
         android:layout_gravity="end"
         android:src="@drawable/ic_close"
         android:layout_margin="16dp"/>
+
+    <TextView
+        android:id="@+id/text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_margin="16dp"
+        android:textColor="@color/white"
+        android:typeface="normal"
+        android:text="Описание видео Может быть очень много текста даже в нельскольк строк"/>
 </FrameLayout>

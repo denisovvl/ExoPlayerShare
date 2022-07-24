@@ -4,7 +4,9 @@ import android.animation.ValueAnimator
 import android.graphics.Color
 import android.os.Bundle
 import android.view.*
+import android.view.animation.OvershootInterpolator
 import android.widget.FrameLayout
+import android.widget.Toolbar
 import androidx.core.animation.addListener
 import androidx.core.view.*
 import androidx.fragment.app.Fragment
@@ -76,20 +78,25 @@ class FullViewFragment : Fragment(), PlayerPositionProvider {
                     ?.apply {
                         addListener(onEnd = {
                             getBackPlayer().getPlayer().visibility = View.INVISIBLE
-                            targetSize = getPlayerPosition()
+                            targetSize = PlayerPosition(binding.playerView.width, binding.playerView.height, 0, 0)
                             startSize?.let { s ->
                                 targetSize?.let { t ->
                                     diffSize = PlayerPosition(t.width - s.width, t.height - s.height, 0, 0)
                                 }
                             }
+                            binding.playerView.layoutParams = (binding.playerView.layoutParams as FrameLayout.LayoutParams).apply {
+                                width = Toolbar.LayoutParams.MATCH_PARENT
+                                height = Toolbar.LayoutParams.MATCH_PARENT
+                            }
                         })
+                        interpolator = OvershootInterpolator()
                     }
                     ?.start()
             }
         }
         var startY = 0F
         var offset: Float = 0F
-        binding.root.doOnLayout { maxOffset = binding.root.height / 4 }
+        binding.root.doOnLayout { maxOffset = binding.root.height / 3 }
         binding.root.setOnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
@@ -98,16 +105,22 @@ class FullViewFragment : Fragment(), PlayerPositionProvider {
                 MotionEvent.ACTION_MOVE -> {
                     offset = event.rawY - startY
                     val (animWidth, animHeight) = getWidthHeight(offset / maxOffset) ?: return@setOnTouchListener false
-                    binding.playerView.layoutParams = (binding.playerView.layoutParams as FrameLayout.LayoutParams).apply {
+                    binding.root.layoutParams = (binding.root.layoutParams as FrameLayout.LayoutParams).apply {
                         width = animWidth
                         height = animHeight
                         setMargins(leftMargin, offset.toInt(), rightMargin, bottomMargin)
-                        gravity = Gravity.CENTER_HORIZONTAL
+                        gravity = Gravity.CENTER
+                    }
+                    binding.btn.alpha = 1 - abs(offset / maxOffset)
+                    binding.text.alpha = 1 - abs(offset / maxOffset)
+                    if (animWidth == startSize?.width || kotlin.math.abs(offset) > maxOffset) {
+                        getBackPlayer().setupBackAnim(250)
+                        binding.root.setOnTouchListener(null)
                     }
                 }
                 MotionEvent.ACTION_UP -> {
                     if (kotlin.math.abs(offset) > maxOffset) {
-                        getBackPlayer().setupBackAnim()
+                        getBackPlayer().setupBackAnim(250)
                     } else {
                         moveVideoToStart(offset)
                     }
@@ -122,7 +135,7 @@ class FullViewFragment : Fragment(), PlayerPositionProvider {
     override fun getPlayer() = binding.playerView
 
     override fun getPlayerPosition(): PlayerPosition {
-        val lp = binding.playerView.layoutParams as FrameLayout.LayoutParams
+        val lp = binding.root.layoutParams as FrameLayout.LayoutParams
         return PlayerPosition(lp.width, lp.height, lp.gravity, lp.topMargin)
     }
 
@@ -148,8 +161,10 @@ class FullViewFragment : Fragment(), PlayerPositionProvider {
                 val topMargin = (valAnim.animatedValue as Float) * offset
                 val sizeOffset = (offset * valAnim.animatedValue as Float) / maxOffset
                 val (animWidth, animHeight) = getWidthHeight(sizeOffset) ?: return@addUpdateListener
-                binding.playerView.layoutParams =
-                    (binding.playerView.layoutParams as FrameLayout.LayoutParams).apply {
+                binding.btn.alpha = 1 - abs(sizeOffset)
+                binding.text.alpha = 1 - abs(sizeOffset)
+                binding.root.layoutParams =
+                    (binding.root.layoutParams as FrameLayout.LayoutParams).apply {
                         width = animWidth
                         height = animHeight
                         setMargins(leftMargin, topMargin.toInt(), rightMargin, bottomMargin)
@@ -161,9 +176,11 @@ class FullViewFragment : Fragment(), PlayerPositionProvider {
 
     private fun getWidthHeight(offset: Float): Pair<Int, Int>? {
         val largeWidth = targetSize?.width ?: return null
-        val decWidth = (diffSize?.width ?: 0) * abs(offset)
+        //val decWidth = (diffSize?.width ?: 0) * abs(offset)
+        val decWidth = (150 ?: 0) * abs(offset)
         val largeHeight = targetSize?.height ?: return null
-        val decHeight = (diffSize?.height ?: 0) * abs(offset)
+        //val decHeight = (diffSize?.height ?: 0) * abs(offset)
+        val decHeight = (150 ?: 0) * abs(offset)
         return Pair((largeWidth - decWidth).toInt(), (largeHeight - decHeight).toInt())
     }
 
