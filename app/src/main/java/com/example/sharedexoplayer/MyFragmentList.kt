@@ -98,7 +98,6 @@ class MyFragmentList : Fragment(), PlayerPositionProvider {
 
     private fun onClickItem(item: String, view: View) {
         requireActivity().supportFragmentManager.beginTransaction()
-            .setReorderingAllowed(true)
             .add(R.id.conteiner, FullViewFragment.getInstance(item), "FullViewFragment")
             .addToBackStack(null)
             .commit()
